@@ -58,6 +58,6 @@ app.delete('/comments/:id', commentController.remove);
 
 
 //Запуск серва
-app.listen(3000, () => {
+app.listen(PORT, () => {
   console.log('Сервер бежит, пон <3 http://localhost:'+ PORT)
 })
