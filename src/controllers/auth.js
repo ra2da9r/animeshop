@@ -1,29 +1,116 @@
+import { createHash } from 'node:crypto';
 import { Router } from 'express';
+import { prisma } from '../db.js';
 
-export const authRouter = Router();
+const authRouter = Router();
 
-authRouter.post('/registration', (req, res) => {
-    const { name, email, password } = req.body || {};
+const hashPassword = (password) => {
+    return createHash('sha256').update(password).digest('hex');
+};
 
-    if (!name || !email || !password) {
-        return res.status(400).json({ message: 'Нужно передать name, email и password' });
+const validateEmail = (email) => {
+    const value = typeof email === 'string' ? email.trim().toLowerCase() : '';
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!value) throw new Error('Email обязателен');
+    if (!emailPattern.test(value)) throw new Error('Некорректный email');
+
+    return value;
+};
+
+const validateRegisterInput = ({ name, email, password }) => {
+    if (typeof name !== 'string' || name.trim().length < 2) {
+        throw new Error('Имя должно содержать минимум 2 символа');
     }
 
-    res.status(201).json({
-        message: 'Пользователь успешно зарегистрирован',
-        user: { name, email },
-    });
-});
+    const validEmail = validateEmail(email);
 
-authRouter.post('/login', (req, res) => {
-    const { email, password } = req.body || {};
-
-    if (!email || !password) {
-        return res.status(400).json({ message: 'Email и password обязательны' });
+    if (typeof password !== 'string' || password.length < 8) {
+        throw new Error('Пароль должен содержать минимум 8 символов');
     }
 
-    res.json({
-        message: 'Успешный вход',
-        user: { email },
-    });
+    return {
+        name: name.trim(),
+        email: validEmail,
+        password,
+    };
+};
+
+const validateLoginInput = ({ email, password }) => {
+    if (typeof password !== 'string' || password.length < 8) {
+        throw new Error('Пароль должен содержать минимум 8 символов');
+    }
+
+    return {
+        email: validateEmail(email),
+        password,
+    };
+};
+
+authRouter.post('/registration', async (req, res) => {
+    try {
+        const payload = validateRegisterInput(req.body || {});
+
+        const existingUser = await prisma.user.findUnique({
+            where: { email: payload.email },
+        });
+
+        if (existingUser) {
+            return res.status(409).json({ message: 'Пользователь с таким email уже существует' });
+        }
+
+        const passwordHash = hashPassword(payload.password);
+
+        const user = await prisma.user.create({
+            data: {
+                name: payload.name,
+                email: payload.email,
+                passwordHash,
+            },
+        });
+
+        return res.status(201).json({
+            message: 'Пользователь успешно зарегистрирован',
+            user: {
+                id: user.id,
+                email: user.email,
+                name: user.name,
+            },
+        });
+    } catch (error) {
+        return res.status(400).json({ message: error.message });
+    }
 });
+
+authRouter.post('/login', async (req, res) => {
+    try {
+        const payload = validateLoginInput(req.body || {});
+
+        const user = await prisma.user.findUnique({
+            where: { email: payload.email },
+        });
+
+        if (!user) {
+            return res.status(401).json({ message: 'Пользователь не найден' });
+        }
+
+        const isPasswordValid = hashPassword(payload.password) === user.passwordHash;
+
+        if (!isPasswordValid) {
+            return res.status(401).json({ message: 'Неверный пароль' });
+        }
+
+        return res.json({
+            message: 'Успешный вход',
+            user: {
+                id: user.id,
+                email: user.email,
+                name: user.name,
+            },
+        });
+    } catch (error) {
+        return res.status(400).json({ message: error.message });
+    }
+});
+
+export { authRouter };
