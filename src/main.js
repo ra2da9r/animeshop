@@ -1,9 +1,8 @@
 import express from 'express'
 import cors from 'cors'
 import { requireAuthorization } from './db/classes.js'
-import { productController } from './controllers/productController.js'
-import { userController } from './controllers/userController.js'
-import { commentController } from './controllers/commentController.js'
+import { authRouter } from './controllers/auth.js'
+import { productController, userController, commentController } from './controllers/controls.js'
 const app = express()
 
 const PORT = 3000;
@@ -21,6 +20,7 @@ app.use((req, res, next) =>{
 })
 
 app.use(express.json());
+app.use('/auth', authRouter);
 
 app.post('/echo', (req, res) => { 
     res.json(req.body);
