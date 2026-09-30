@@ -1,9 +1,9 @@
 import { db } from '../db/arr.js';
 
 export const userService = {
-    getAll: () => db.getAllAnimeshniki(),
-    getById: (id) => db.getAnimeshById(id),
-    create: (data) => db.createAnimeshnik(data),
-    update: (id, data) => db.updateAnimeshnik(id, data),
-    remove: (id) => db.deleteAnimeshnik(id),
+    getAll: async () => db.getAllAnimeshniki(),
+    getById: async (id) => db.getAnimeshById(id),
+    create: async (data) => db.createAnimeshnik(data),
+    update: async (id, data) => db.updateAnimeshnik(id, data),
+    remove: async (id) => db.deleteAnimeshnik(id),
 };

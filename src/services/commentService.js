@@ -1,10 +1,10 @@
 import { db } from '../db/arr.js';
 
-const formatComment = (comment) => {
+const formatComment = async (comment) => {
     if (!comment) return comment;
 
     const { productId, ...commentData } = comment;
-    const anime = db.getAnimeById(productId);
+    const anime = await db.getAnimeById(productId);
 
     return {
         ...commentData,
@@ -13,9 +13,15 @@ const formatComment = (comment) => {
 };
 
 export const commentService = {
-    getAll: () => db.getAllComments().map(formatComment),
-    getByProductId: (productId) => db.getCommentsByANIMEId(productId).map(formatComment),
-    create: (data) => formatComment(db.createComment(data)),
-    update: (id, data) => formatComment(db.updateComment(id, data)),
-    remove: (id) => db.deleteComment(id),
+    getAll: async () => {
+        const comments = await db.getAllComments();
+        return Promise.all(comments.map((comment) => formatComment(comment)));
+    },
+    getByProductId: async (productId) => {
+        const comments = await db.getCommentsByANIMEId(productId);
+        return Promise.all(comments.map((comment) => formatComment(comment)));
+    },
+    create: async (data) => formatComment(await db.createComment(data)),
+    update: async (id, data) => formatComment(await db.updateComment(id, data)),
+    remove: async (id) => db.deleteComment(id),
 };

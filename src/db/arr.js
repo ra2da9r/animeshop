@@ -1,115 +1,158 @@
-import { AnimeProduct, Animeshnick, Comment } from "./classes.js";
+import { AnimeProduct, Animeshnick, Comment, hashPassword, comparePassword } from './database.js';
 
-class DatabaseAnime { 
-    constructor(){ 
-        this.animeproduct = [
-            new AnimeProduct(1, 'Становясь Волшебницей', 2000, 10), 
-            new AnimeProduct(2, 'Мадока Магика', 1500, 45)
-        ]
-        this.users = [ 
-            new Animeshnick(1, 'LittleFairy34', 'littlefairy@gmail.com'), 
-            new Animeshnick(2, 'Maclover', 'yourbigfatmom@gmail.com')
-        ]
-        this.comments = [
-            new Comment(1, 1, 1, 'Коммент Коммент коммент коммент.'),
-            new Comment(2, 1, 2, 'АНИМЕ КАЛ.'),
-            new Comment(3, 2, 1, 'Я люблю это аниме!'),
-            new Comment(4, 2, 2, 'Я тоже люблю это аниме!'),
-        ]
+const toObject = (record) => (record ? record.get({ plain: true }) : null);
+
+class DatabaseAnime {
+    async getAllAnimeProducts() {
+        const rows = await AnimeProduct.findAll({ order: [['id', 'ASC']] });
+        return rows.map((row) => toObject(row));
     }
 
-    //animeeeeeeeeee
-    getAllAnimeProducts(){return this.animeproduct;}
-    getAnimeById(id){return this.animeproduct.find(p => p.id === id)}
-    createAnime(data){ 
-        const nextId = this.animeproduct.length ? Math.max(...this.animeproduct.map(p => p.id)) + 1 : 1;
-        const newAnimeproduct = new AnimeProduct(nextId, data.name, data.price, data.stock)
-        return newAnimeproduct
+    async getAnimeById(id) {
+        const row = await AnimeProduct.findByPk(Number(id));
+        return row ? toObject(row) : null;
     }
 
-    updateAnime(id, data){ 
-        const animepr = this.getAnimeById(id); 
-        if(!animepr) return null;
-        if(data.name !== undefined){ 
-            animepr.name = data.name
-        }
-        if(data.price !== undefined){ 
-            animepr.price = data.price
-        }
-        if(data.stock !== undefined){ 
-            animepr.stock = data.stock
-        }
-        return animepr
+    async createAnime(data) {
+        const row = await AnimeProduct.create({
+            name: String(data.name).trim(),
+            price: Number(data.price),
+            stock: Number(data.stock),
+        });
+        return toObject(row);
     }
 
-    deleteAnime(id){ 
-        const index = this.animeproduct.findIndex(p => p.id === id);
-        if (index === -1) return false; 
-        this.animeproduct.splice(index, 1); 
-        return true;
+    async updateAnime(id, data) {
+        const row = await AnimeProduct.findByPk(Number(id));
+        if (!row) return null;
+
+        if (data.name !== undefined) row.name = String(data.name).trim();
+        if (data.price !== undefined) row.price = Number(data.price);
+        if (data.stock !== undefined) row.stock = Number(data.stock);
+
+        await row.save();
+        return toObject(row);
     }
 
-    //Animeshniki 
-    getAllAnimeshniki(){return this.users; }
-    getAnimeshById(id){ return this.users.find(u => u.id === id)}
-    createAnimeshnik(data){ 
-        const nextId = this.users.length ? Math.max(...this.users.map(u => u.id)) + 1 : 1;
-        const newAnimeshnik = new Animeshnick(nextId, data.username, data.email); 
-        this.users.push(newAnimeshnik); 
-        return newAnimeshnik;
+    async deleteAnime(id) {
+        const deleted = await AnimeProduct.destroy({ where: { id: Number(id) } });
+        return deleted > 0;
     }
 
-    updateAnimeshnik(id, data){ 
-        const lvlup = this.getAnimeshById(id); 
-        if(!lvlup) return null;
-        if(data.username !== undefined){ 
-            lvlup.username = data.username
-        }
-        if(data.email !== undefined){ 
-            lvlup.email = data.email
-        }
-
-        return lvlup
+    async getAllAnimeshniki() {
+        const rows = await Animeshnick.findAll({ order: [['id', 'ASC']] });
+        return rows.map((row) => {
+            const user = toObject(row);
+            delete user.passwordHash;
+            return user;
+        });
     }
 
-    deleteAnimeshnik(id){ 
-        const index = this.users.findIndex(u => u.id === id);
-        if (index === -1) return false; 
-        this.users.splice(index, 1); 
-        return true;
+    async getAnimeshById(id) {
+        const row = await Animeshnick.findByPk(Number(id));
+        if (!row) return null;
+        const user = toObject(row);
+        delete user.passwordHash;
+        return user;
     }
 
-
-    //каменты
-    getAllComments(){ return this.comments; }
-    getCommentById(id){ return this.comments.find(c => c.id === id); }
-    
-    getCommentsByANIMEId(productId){
-        return this.comments.filter(c => c.productId === productId);
+    async getAnimeshByEmail(email) {
+        const row = await Animeshnick.findOne({ where: { email: String(email).trim().toLowerCase() } });
+        return row ? toObject(row) : null;
     }
 
-    createComment(data){
-        if (!this.getAnimeById(data.productId)) throw new Error("Такого аниме нет в магазине! (｡•́︿•̀｡)");
-        if (!this.getAnimeshById(data.userId)) throw new Error("Такой анимешник не зарегистрирован! (⇀⇀)");
+    async createAnimeshnik(data) {
+        const payload = {
+            username: String(data.username).trim(),
+            email: String(data.email).trim().toLowerCase(),
+            passwordHash: data.passwordHash || hashPassword(data.password || ''),
+        };
 
-        const nextId = this.comments.length ? Math.max(...this.comments.map(c => c.id)) + 1 : 1;
-        const newComment = new Comment(nextId, data.productId, data.userId, data.text);
-        this.comments.push(newComment);
-        return newComment;
+        const row = await Animeshnick.create(payload);
+        const user = toObject(row);
+        delete user.passwordHash;
+        return user;
     }
 
-    updateComment(id, data){
-        const comment = this.getCommentById(id);
-        if(!comment) return null;
-        if(data.text !== undefined) comment.text = data.text;
-        return comment;
+    async updateAnimeshnik(id, data) {
+        const row = await Animeshnick.findByPk(Number(id));
+        if (!row) return null;
+
+        if (data.username !== undefined) row.username = String(data.username).trim();
+        if (data.email !== undefined) row.email = String(data.email).trim().toLowerCase();
+        if (data.passwordHash !== undefined) row.passwordHash = data.passwordHash;
+
+        await row.save();
+        const user = toObject(row);
+        delete user.passwordHash;
+        return user;
     }
 
-    deleteComment(id){
-        const index = this.comments.findIndex(c => c.id === id);
-        if (index === -1) return false;
-        this.comments.splice(index, 1);
-        return true;
+    async deleteAnimeshnik(id) {
+        const deleted = await Animeshnick.destroy({ where: { id: Number(id) } });
+        return deleted > 0;
+    }
+
+    async getAllComments() {
+        const rows = await Comment.findAll({ order: [['id', 'ASC']] });
+        return rows.map((row) => toObject(row));
+    }
+
+    async getCommentById(id) {
+        const row = await Comment.findByPk(Number(id));
+        return row ? toObject(row) : null;
+    }
+
+    async getCommentsByANIMEId(productId) {
+        const rows = await Comment.findAll({
+            where: { productId: Number(productId) },
+            order: [['id', 'ASC']],
+        });
+        return rows.map((row) => toObject(row));
+    }
+
+    async createComment(data) {
+        const product = await this.getAnimeById(data.productId);
+        if (!product) throw new Error('Такого аниме нет в магазине! (｡•́︿•̀｡)');
+
+        const user = await this.getAnimeshById(data.userId);
+        if (!user) throw new Error('Такой анимешник не зарегистрирован! (⇀⇀)');
+
+        const row = await Comment.create({
+            productId: Number(data.productId),
+            userId: Number(data.userId),
+            text: String(data.text).trim(),
+        });
+
+        return toObject(row);
+    }
+
+    async updateComment(id, data) {
+        const row = await Comment.findByPk(Number(id));
+        if (!row) return null;
+
+        if (data.text !== undefined) row.text = String(data.text).trim();
+        await row.save();
+        return toObject(row);
+    }
+
+    async deleteComment(id) {
+        const deleted = await Comment.destroy({ where: { id: Number(id) } });
+        return deleted > 0;
+    }
+
+    async validateCredentials(email, password) {
+        const user = await this.getAnimeshByEmail(email);
+        if (!user) return null;
+
+        const passwordHash = await Animeshnick.findByPk(user.id, { attributes: ['passwordHash'] });
+        if (!passwordHash) return null;
+
+        const isValid = comparePassword(password, passwordHash.passwordHash);
+        if (!isValid) return null;
+
+        const safeUser = { ...user };
+        return safeUser;
     }
 }
 
