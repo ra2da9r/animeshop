@@ -1,12 +1,11 @@
-import { createHash } from 'node:crypto';
+
 import { Router } from 'express';
-import { prisma } from '../db.js';
+import { createHash } from 'node:crypto';
+import { db } from '../db/arr.js';
 
 const authRouter = Router();
 
-const hashPassword = (password) => {
-    return createHash('sha256').update(password).digest('hex');
-};
+const hashPassword = (password) => createHash('sha256').update(String(password)).digest('hex');
 
 const validateEmail = (email) => {
     const value = typeof email === 'string' ? email.trim().toLowerCase() : '';
@@ -47,26 +46,22 @@ const validateLoginInput = ({ email, password }) => {
     };
 };
 
-authRouter.post('/registration', async (req, res) => {
+const findUserByEmail = (email) =>
+    db.getAllAnimeshniki().find((user) => user.email.toLowerCase() === email.toLowerCase());
+
+authRouter.post('/registration', (req, res) => {
     try {
         const payload = validateRegisterInput(req.body || {});
 
-        const existingUser = await prisma.user.findUnique({
-            where: { email: payload.email },
-        });
-
+        const existingUser = findUserByEmail(payload.email);
         if (existingUser) {
             return res.status(409).json({ message: 'Пользователь с таким email уже существует' });
         }
 
-        const passwordHash = hashPassword(payload.password);
-
-        const user = await prisma.user.create({
-            data: {
-                name: payload.name,
-                email: payload.email,
-                passwordHash,
-            },
+        const user = db.createAnimeshnik({
+            username: payload.name,
+            email: payload.email,
+            passwordHash: hashPassword(payload.password),
         });
 
         return res.status(201).json({
@@ -74,7 +69,7 @@ authRouter.post('/registration', async (req, res) => {
             user: {
                 id: user.id,
                 email: user.email,
-                name: user.name,
+                name: user.username,
             },
         });
     } catch (error) {
@@ -82,20 +77,16 @@ authRouter.post('/registration', async (req, res) => {
     }
 });
 
-authRouter.post('/login', async (req, res) => {
+authRouter.post('/login', (req, res) => {
     try {
         const payload = validateLoginInput(req.body || {});
 
-        const user = await prisma.user.findUnique({
-            where: { email: payload.email },
-        });
-
+        const user = findUserByEmail(payload.email);
         if (!user) {
             return res.status(401).json({ message: 'Пользователь не найден' });
         }
 
         const isPasswordValid = hashPassword(payload.password) === user.passwordHash;
-
         if (!isPasswordValid) {
             return res.status(401).json({ message: 'Неверный пароль' });
         }
@@ -105,7 +96,7 @@ authRouter.post('/login', async (req, res) => {
             user: {
                 id: user.id,
                 email: user.email,
-                name: user.name,
+                name: user.username,
             },
         });
     } catch (error) {
