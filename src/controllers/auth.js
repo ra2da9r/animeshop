@@ -16,7 +16,7 @@ const validateEmail = (email) => {
 
 const validateRegisterInput = ({ name, email, password }) => {
     if (typeof name !== 'string' || name.trim().length < 2) {
-        throw new Error('Имя должно содержать минимум 2 символа');
+        throw new Error('СЛИШКОМ КОРОТКОЕ ИМЯ!! ДУРАК');
     }
 
     const validEmail = validateEmail(email);
