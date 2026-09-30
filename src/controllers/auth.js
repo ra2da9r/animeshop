@@ -1,11 +1,8 @@
-
 import { Router } from 'express';
-import { createHash } from 'node:crypto';
 import { db } from '../db/arr.js';
+import { hashPassword, comparePassword } from '../db/database.js';
 
 const authRouter = Router();
-
-const hashPassword = (password) => createHash('sha256').update(String(password)).digest('hex');
 
 const validateEmail = (email) => {
     const value = typeof email === 'string' ? email.trim().toLowerCase() : '';
@@ -19,7 +16,7 @@ const validateEmail = (email) => {
 
 const validateRegisterInput = ({ name, email, password }) => {
     if (typeof name !== 'string' || name.trim().length < 2) {
-        throw new Error('Имя должно содержать минимум 2 символа');
+        throw new Error('СЛИШКОМ КОРОТКОЕ ИМЯ!! ДУРАК');
     }
 
     const validEmail = validateEmail(email);
@@ -46,19 +43,18 @@ const validateLoginInput = ({ email, password }) => {
     };
 };
 
-const findUserByEmail = (email) =>
-    db.getAllAnimeshniki().find((user) => user.email.toLowerCase() === email.toLowerCase());
+const findUserByEmail = async (email) => db.getAnimeshByEmail(email);
 
-authRouter.post('/registration', (req, res) => {
+authRouter.post('/registration', async (req, res) => {
     try {
         const payload = validateRegisterInput(req.body || {});
+        const existingUser = await findUserByEmail(payload.email);
 
-        const existingUser = findUserByEmail(payload.email);
         if (existingUser) {
             return res.status(409).json({ message: 'Пользователь с таким email уже существует' });
         }
 
-        const user = db.createAnimeshnik({
+        const user = await db.createAnimeshnik({
             username: payload.name,
             email: payload.email,
             passwordHash: hashPassword(payload.password),
@@ -77,16 +73,16 @@ authRouter.post('/registration', (req, res) => {
     }
 });
 
-authRouter.post('/login', (req, res) => {
+authRouter.post('/login', async (req, res) => {
     try {
         const payload = validateLoginInput(req.body || {});
+        const user = await findUserByEmail(payload.email);
 
-        const user = findUserByEmail(payload.email);
         if (!user) {
             return res.status(401).json({ message: 'Пользователь не найден' });
         }
 
-        const isPasswordValid = hashPassword(payload.password) === user.passwordHash;
+        const isPasswordValid = comparePassword(payload.password, user.passwordHash || '');
         if (!isPasswordValid) {
             return res.status(401).json({ message: 'Неверный пароль' });
         }

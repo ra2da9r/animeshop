@@ -27,6 +27,7 @@ export class Animeshnick{ //Онимешник
         this.id = id; 
         this.username = username; 
         this.email = email; //Ну чтобы понимать, как связаться с анимешником (๑•̀ㅂ•́)و✧
+        this.passwordHash = null;
 
         if(!this.email.toLowerCase().includes("@") || !this.email.toLowerCase().includes(".")){ 
             throw new Error(`Будто бы это не почта. Пожалуйста, не дури меня`)
