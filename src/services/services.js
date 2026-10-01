@@ -25,3 +25,19 @@ export const commentService = {
     update: async (id, data) => formatComment(await db.updateComment(id, data)),
     remove: async (id) => db.deleteComment(id),
 };
+
+export const productService = {
+    getAll: async () => db.getAllAnimeProducts(),
+    getById: async (id) => db.getAnimeById(id),
+    create: async (data) => db.createAnime(data),
+    update: async (id, data) => db.updateAnime(id, data),
+    remove: async (id) => db.deleteAnime(id),
+};
+
+export const userService = {
+    getAll: async () => db.getAllAnimeshniki(),
+    getById: async (id) => db.getAnimeshById(id),
+    create: async (data) => db.createAnimeshnik(data),
+    update: async (id, data) => db.updateAnimeshnik(id, data),
+    remove: async (id) => db.deleteAnimeshnik(id),
+};

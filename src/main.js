@@ -4,9 +4,7 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import { initializeDatabase } from './db/database.js';
 import { authenticateToken } from './middlewares/authMiddleware.js';
-import { productController } from './controllers/productController.js';
-import { userController } from './controllers/userController.js';
-import { commentController } from './controllers/commentController.js';
+import { commentController, productController, userController } from './controllers/resourceControllers.js';
 import { authRouter } from './controllers/auth.js';
 
 const app = express();
