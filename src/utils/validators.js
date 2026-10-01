@@ -1,19 +1,25 @@
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+// Валидация непустой строки
 export const isNonEmptyString = (value) =>
     typeof value === 'string' && value.trim().length > 0;
 
+// Валидация положительного числа
 export const isPositiveNumber = (value) =>
     Number.isFinite(value) && value > 0;
 
+// Валидация корректного ID
 export const isValidId = (value) => Number.isInteger(value) && value > 0;
 
+// Валидация корректного email
 export const isValidEmail = (email) =>
     typeof email === 'string' && emailPattern.test(email.trim());
 
+// Валидация корректного пароля
 export const isValidPassword = (password) =>
     typeof password === 'string' && password.length >= 6;
 
+// Валидация данных Аниме-товара
 export const validateProduct = (data) => {
     const errors = {};
     if (!isNonEmptyString(data?.name)) errors.name = 'Название обязательно';
@@ -22,6 +28,7 @@ export const validateProduct = (data) => {
     return errors;
 };
 
+// Валидация данных анимешника
 export const validateUser = (data, { partial = false } = {}) => {
     const errors = {};
     if (!partial || data?.username !== undefined) {
@@ -36,6 +43,7 @@ export const validateUser = (data, { partial = false } = {}) => {
     return errors;
 };
 
+// Валидация данных комментария
 export const validateComment = (data, { partial = false } = {}) => {
     const errors = {};
     if (!partial || data?.productId !== undefined) {
@@ -50,6 +58,7 @@ export const validateComment = (data, { partial = false } = {}) => {
     return errors;
 };
 
+// Валидация ошибок
 export const validationError = (errors) => {
     const error = new Error('Некорректные данные');
     error.status = 400;
