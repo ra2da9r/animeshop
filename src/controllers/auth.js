@@ -56,6 +56,7 @@ const cookieOptions = (maxAge) => ({
     maxAge,
 });
 
+// Выдача токенов
 const issueTokens = (res, user) => {
     const accessToken = tokenService.generateAccessToken(user);
     const refreshToken = tokenService.generateRefreshToken(user);
@@ -133,7 +134,7 @@ authRouter.post('/login', async (req, res) => {
 authRouter.post('/refresh', (req, res) => {
 
     const refreshToken = req.cookies?.refreshToken;
-    
+
     if (!refreshToken) {
         return res.status(401).json({ message: 'Требуется refresh токен' });
     }

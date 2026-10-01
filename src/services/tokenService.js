@@ -1,5 +1,6 @@
 import jwt from 'jsonwebtoken';
 
+// Функция для получения секретного ключа из переменных окружения
 const getSecret = (name) => {
     const secret = process.env[name];
     if (!secret) {
@@ -10,6 +11,7 @@ const getSecret = (name) => {
     return secret;
 };
 
+// Сервис для работы с токенами
 export const tokenService = {
     generateAccessToken: (user) => jwt.sign(
         { email: user.email, tokenType: 'access' },

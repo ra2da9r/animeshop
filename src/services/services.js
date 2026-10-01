@@ -1,5 +1,7 @@
 import { db } from '../db/arr.js';
 
+
+// Форматирование комментария
 const formatComment = async (comment) => {
     if (!comment) return comment;
 
@@ -12,6 +14,8 @@ const formatComment = async (comment) => {
     };
 };
 
+
+// Сервис для работы с комментариями
 export const commentService = {
     getAll: async () => {
         const comments = await db.getAllComments();
@@ -26,6 +30,7 @@ export const commentService = {
     remove: async (id) => db.deleteComment(id),
 };
 
+// Сервис для работы с аниме-товарами
 export const productService = {
     getAll: async () => db.getAllAnimeProducts(),
     getById: async (id) => db.getAnimeById(id),
@@ -34,6 +39,8 @@ export const productService = {
     remove: async (id) => db.deleteAnime(id),
 };
 
+
+// Сервис для работы с анимешниками
 export const userService = {
     getAll: async () => db.getAllAnimeshniki(),
     getById: async (id) => db.getAnimeshById(id),

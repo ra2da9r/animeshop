@@ -16,7 +16,9 @@ export class AnimeProduct{
     }
 }
 
-export class Animeshnick{ //Онимешник
+
+//Онимешник
+export class Animeshnick{ 
     constructor(id, username, email){ 
         if (typeof username !== 'string' || username.trim() === ''){ 
             throw new Error(`Прости, но как тебя зовут Сенпай?`)
@@ -35,6 +37,7 @@ export class Animeshnick{ //Онимешник
     }
 }
 
+//Общительные анимешники 
 export class Comment {
     constructor(id, productId, userId, text) {
 
@@ -49,6 +52,7 @@ export class Comment {
     }
 }
 
+//Функция для проверки авторизации
 export const requireAuthorization = (req, res, next) => { 
     if (!req.headers.authorization) {
         return res.status(401).json({ message: 'Требуется заголовок Authorization' });

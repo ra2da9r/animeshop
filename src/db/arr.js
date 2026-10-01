@@ -2,6 +2,7 @@ import { AnimeProduct, Animeshnick, Comment, hashPassword, comparePassword } fro
 
 const toObject = (record) => (record ? record.get({ plain: true }) : null);
 
+// Класс для работы с базой данных аниме
 class DatabaseAnime {
     async getAllAnimeProducts() {
         const rows = await AnimeProduct.findAll({ order: [['id', 'ASC']] });

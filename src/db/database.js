@@ -1,12 +1,14 @@
 import { Sequelize, DataTypes } from 'sequelize';
 import bcrypt from 'bcryptjs';
 
+// Инициализация Sequelize
 const sequelize = new Sequelize({
     dialect: 'sqlite',
     storage: './database.sqlite',
     logging: false,
 });
 
+// Определение моделей
 export const AnimeProduct = sequelize.define('AnimeProduct', {
     id: {
         type: DataTypes.INTEGER,
@@ -27,6 +29,7 @@ export const AnimeProduct = sequelize.define('AnimeProduct', {
     },
 }, { timestamps: false });
 
+// Модель для хранения информации об анимешниках
 export const Animeshnick = sequelize.define('Animeshnick', {
     id: {
         type: DataTypes.INTEGER,
@@ -51,6 +54,7 @@ export const Animeshnick = sequelize.define('Animeshnick', {
     },
 }, { timestamps: false });
 
+// Модель для хранения комментариев
 export const Comment = sequelize.define('Comment', {
     id: {
         type: DataTypes.INTEGER,
@@ -78,10 +82,15 @@ export const Comment = sequelize.define('Comment', {
 export const hashPassword = (password) => bcrypt.hashSync(String(password), 10);
 export const comparePassword = (password, passwordHash) => bcrypt.compareSync(String(password), String(passwordHash));
 
+
+// Инициализация базы данных
+
 export const initializeDatabase = async () => {
     await sequelize.authenticate();
     await sequelize.sync({ alter: true });
 
+
+    // Проверка наличия продуктов
     const productCount = await AnimeProduct.count();
     if (productCount === 0) {
         await AnimeProduct.bulkCreate([
@@ -90,6 +99,7 @@ export const initializeDatabase = async () => {
         ]);
     }
 
+    // Проверка наличия анимешников
     const userCount = await Animeshnick.count();
     if (userCount === 0) {
         await Animeshnick.bulkCreate([
@@ -98,6 +108,7 @@ export const initializeDatabase = async () => {
         ]);
     }
 
+    // Проверка наличия комментариев
     const commentCount = await Comment.count();
     if (commentCount === 0) {
         const product1 = await AnimeProduct.findOne({ where: { name: 'Становясь Волшебницей' } });
@@ -105,6 +116,7 @@ export const initializeDatabase = async () => {
         const user1 = await Animeshnick.findOne({ where: { email: 'littlefairy@gmail.com' } });
         const user2 = await Animeshnick.findOne({ where: { email: 'yourbigfatmom@gmail.com' } });
 
+        // Создание комментариев
         await Comment.bulkCreate([
             { productId: product1?.id ?? 1, userId: user1?.id ?? 1, text: 'Коммент Коммент коммент коммент.' },
             { productId: product1?.id ?? 1, userId: user2?.id ?? 2, text: 'АНИМЕ КАЛ.' },
