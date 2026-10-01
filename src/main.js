@@ -1,7 +1,9 @@
+import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
-import { requireAuthorization } from './db/classes.js';
+import cookieParser from 'cookie-parser';
 import { initializeDatabase } from './db/database.js';
+import { authenticateToken } from './middlewares/authMiddleware.js';
 import { productController } from './controllers/productController.js';
 import { userController } from './controllers/userController.js';
 import { commentController } from './controllers/commentController.js';
@@ -11,8 +13,9 @@ const app = express();
 const PORT = 3000;
 const allowedOrigins = ['http://localhost:5173', 'http://localhost:3000'];
 
-app.use(cors({ origin: allowedOrigins }));
+app.use(cors({ origin: allowedOrigins, credentials: true }));
 app.use(express.json());
+app.use(cookieParser());
 app.use((req, res, next) => {
     console.log(req.method, req.url, new Date());
     next();
@@ -24,7 +27,9 @@ app.post('/echo', (req, res) => {
     res.json(req.body);
 });
 
-app.get('/admin', requireAuthorization, (req, res) => {
+app.use(['/admin', '/products', '/users', '/comments'], authenticateToken);
+
+app.get('/admin', (req, res) => {
     res.json({ message: 'ПРИВЕТИК!!! АДОМИИИН' });
 });
 
